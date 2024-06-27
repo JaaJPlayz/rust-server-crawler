@@ -22,16 +22,19 @@ def scrape(url):
         curr_page_info = scrape_item_page(link.attrib["href"])
         info_list.append(curr_page_info)
 
-    print(info_list)
+    return info_list
 
 
 def scrape_item_craft_table(url):
+    print("Scraping: " + url)
     r = requests.get(url)
     sel = Selector(text=r.text)
 
-    # TODO: Retrieve the information for the craft tab
+    # Desired table
+    table = sel.css("table").extract()[2]
+    print(table)
 
-    return sel
+    print("Scraped: " + table)
 
 
 def scrape_single_item(item_url):
@@ -41,13 +44,16 @@ def scrape_single_item(item_url):
     # get the ol with the classes tabs and no-select
     ol = sel.css("ol.tabs.no-select")
 
+    # all the tabs
+    tab_list = []
     for li in ol.css("li"):
-        if li.attrib["data-name"] == "craft":
-            print("Found craft tab")
+        tab_list.append(li.attrib["data-name"])
+
+    for item in tab_list:
+        if item == "craft":
             scrape_item_craft_table(item_url + "#tab=craft")
 
-        if li.attrib["data-name"] == "recycle":
-            print("Found recycle tab")
+        if item == "recycle":
             scrape_item_craft_table(item_url + "#tab=recycle")
 
     return r.text
