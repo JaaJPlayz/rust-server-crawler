@@ -1,8 +1,7 @@
-from parsel import Selector
 import requests
 import rich.traceback
 from bs4 import BeautifulSoup
-
+from parsel import Selector
 
 rich.traceback.install()
 
@@ -18,7 +17,7 @@ def scrape(url):
     info_list = []
     for link in info_block.css("a"):
         iter += 1
-        if iter == 2:
+        if iter == 4:
             break
         curr_page_info = scrape_item_page(link.attrib["href"])
         info_list.append(curr_page_info)
@@ -43,6 +42,7 @@ def scrape_item_craft_table(url):
 def assemble_item_list(scraped_table_html):
     print("Scraped: " + scraped_table_html)
     ingredient_title_list = []
+    resulting_material_list = []
     ingredient_amount_list = []
     ingredient_efficiency_list = []
 
@@ -60,6 +60,14 @@ def assemble_item_list(scraped_table_html):
         for text in td.css("td"):
             for item_name in text.css("td.no-padding"):
                 selector = Selector(text=item_name.extract())
+                # get the alt of the image
+                text = selector.xpath("//img/@alt").get()
+                resulting_material_list.append(text)
+
+    for td in table.css("tbody"):
+        for text in td.css("td"):
+            for item_name in text.css("td.no-padding"):
+                selector = Selector(text=item_name.extract())
                 text = selector.xpath("//span/text()").get()
                 ingredient_amount_list.append(text)
 
@@ -71,18 +79,13 @@ def assemble_item_list(scraped_table_html):
                 if text is not None:
                     ingredient_efficiency_list.append(text)
 
-    # print("TABLE CONTENT: ", table.get())
-    # print("INGREDIENTS TITLE LIIIIIIIIIIIIIIIIIIIIIIIISTT: ", ingredient_title_list)
-    # print("INGREDIENTS AMOUNT LIIIIIIIIIIIIIIIIIIIIIIIISTT: ", ingredient_amount_list)
-    # print(
-    #     "INGREDIENTS EFFICIENCY LIIIIIIIIIIIIIIIIIIIIIIIISTT: ",
-    #     ingredient_efficiency_list,
-    # )
-
     # TODO: Mount the fucking object
     for item in ingredient_title_list:
         final_object = {
             "title": item,
+            "resulting_material": resulting_material_list[
+                ingredient_title_list.index(item)
+            ],
             "amount": ingredient_amount_list[ingredient_title_list.index(item)],
             "efficiency": ingredient_efficiency_list[ingredient_title_list.index(item)],
         }
